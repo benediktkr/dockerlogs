@@ -1,0 +1,8 @@
+dev.env
+*.env
+data/
+\#*
+.#*
+dist/
+__pycache__
+dist/*
