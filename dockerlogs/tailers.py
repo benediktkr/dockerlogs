@@ -32,7 +32,7 @@ class BaseLogTailer:
     def parse_loguru_plain(self, log):
         s = log.split('|')
         name, message = s[2].split(" - ", 1)
-        return {'loguru_timestamp': s[0].strip(),
+        return {'logger_timestamp': s[0].strip(),
                 'severity': s[1].strip(),
                 'logger_name': name.strip(),
                 'message': message.strip(),
@@ -49,8 +49,22 @@ class BaseLogTailer:
             return {'message': log,
                     'parse_error': str(e)}
 
-    def parse_nextcloud_apache(self, log):
 
+    def parse_jellyfin(self, log):
+        s = log.split(" ", 3)
+        logger_name, message = s[3].split(": ", 1)
+        _severity = s[1][1:-1]
+        if _severity == "INF":
+            severity = "INFO"
+        else:
+            severity = _severity
+
+        return {'severity': severity,
+                'message': message,
+                'logger_timestamp': s[0][1:-1],
+                'logger_name': logger_name}
+
+    def parse_nextcloud_apache(self, log):
         s = shlex.split(log)
         try:
             return {
@@ -125,6 +139,8 @@ class DockerContainerTailer(BaseLogTailer):
             self.parse_format = self.parse_loguru_plain
         elif self.format == "nextcloud":
             self.parse_format = self.parse_nextcloud_apache
+        elif self.format == "jellyfin":
+            self.parse_format = self.parse_jellyfin
         else:
             self.parse_format = self.parse_plain
 
