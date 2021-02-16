@@ -16,7 +16,6 @@ import click
 def cli(output_type, output_url):
 
     logger.info(f"dockerlogs v{__version__}")
-    print(LogOutput.list_outputs())
 
     dockerlogs = LogTailers()
     output = LogOutput.get(output_type, output_url)
