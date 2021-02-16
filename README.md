@@ -21,6 +21,7 @@ Can also be configured with environment variables, prefixed with `DOCKERLOGS_`.
 Example:
 
 ```
+DOCKERLOGS_DOCKER=1
 DOCKERLOGS_OUTPUT_TYPE=udp
 DOCKERLOGS_OUTPUT_URL=udp://logstash.example.com:5000
 dockerlogs

@@ -13,11 +13,13 @@ import click
 @click.option('--output-type', default="print",
               type=click.Choice(LogOutput.list_outputs()))
 @click.option('--output-url')
-def cli(output_type, output_url):
+@click.option('--file', multiple=True)
+@click.option('--docker/--no-docker', default=True)
+def cli(output_type, output_url, file, docker):
 
     logger.info(f"dockerlogs v{__version__}")
 
-    dockerlogs = LogTailers()
+    dockerlogs = LogTailers(docker)
     output = LogOutput.get(output_type, output_url)
 
     for logline in dockerlogs.iter_lines():

@@ -47,37 +47,36 @@ class BaseLogTailer:
                     'json': jlog}
         except json.decoder.JSONDecodeError as e:
             return {'message': log,
-                    'json_parse_error': str(e)}
+                    'parse_error': str(e)}
 
-    def parse_nextcloud(self, log):
+    def parse_nextcloud_apache(self, log):
 
         s = shlex.split(log)
-        return {
-            'message': log,
-            'nextcloud': {
-                'ip': s[0],
-                'unknown_1': s[1],
-                'user': s[2],
-                'time': " ".join(s[3:5]),
-                'request': s[5],
-                'returncode': s[6],
-                'bytes': s[7],
-                'unknown_8': s[8],
-                'user_agent': s[9],
+        try:
+            return {
+                'message': log,
+                'nextcloud': {
+                    'ip': s[0],
+                    'unknown_1': s[1],
+                    'user': s[2],
+                    'time': " ".join(s[3:5]),
+                    'request': s[5],
+                    'returncode': s[6],
+                    'bytes': s[7],
+                    'unknown_8': s[8],
+                    'user_agent': s[9],
                 }
-        }
+            }
+        except IndexError as e:
+            return {'message': log,
+                    'parser_error': str(e)}
 
-    def parse(self, jline):
+    def parse_plain(self, log):
+        return {'message': log }
+
+    def parse_log(self, jline):
         log = jline['log'].strip()
-        if self.format == "json":
-            parsed = self.parse_json(log)
-        elif self.format == "loguru_plain":
-            parsed = self.parse_loguru_plain(log)
-        elif self.format == "nextcloud":
-            parsed = self.parse_nextcloud(log)
-        else:
-            parsed = {'message': log }
-
+        parsed = self.parse_format(log)
         return {**parsed, **self.envelope, '@timestamp': jline['time']}
 
     def readline(self):
@@ -88,10 +87,22 @@ class BaseLogTailer:
              line = self.readline()
 
         jline = json.loads(line)
-        parsed = self.parse(jline)
+        parsed = self.parse_log(jline)
 
         return json.dumps(parsed)
 
+
+@dataclass
+class FileTailer(BaseLogTailer):
+    fname: str
+    app_name: str
+    def __post_init__(self):
+        self.name = path.split(self.fname)[1]
+
+        self.envelope = {
+            'app_name': self.app_name,
+            'type': 'filetailer'
+        }
 
 @dataclass
 class DockerContainerTailer(BaseLogTailer):
@@ -106,6 +117,15 @@ class DockerContainerTailer(BaseLogTailer):
         self.format = labels.get('dockerlogs_format', '').lower()
         self.is_json = self.format == "json"
         self.json_msg_key = labels.get('dockerlogs_json_msg_key', "message")
+
+        if format == "json":
+            self.parse_format = self.parse_json
+        elif format == "loguru_plain":
+            self.parse_format = self.parse_loguru_plain
+        elif format == "nextcloud":
+            self.parse_format = self.parse_nextcloud_apache
+        else:
+            self.parse_format = self.parse_plain
 
         # tail the *-json.log file in /var/lib/docker/containers/{id}
         logname = f"{self.full_id}-json.log"
@@ -127,6 +147,7 @@ class DockerContainerTailer(BaseLogTailer):
 
 @dataclass
 class LogTailers:
+    docker: bool
     tailers: dict[int, BaseLogTailer] = field(default_factory=dict)
 
     def __post_init__(self):
@@ -136,16 +157,19 @@ class LogTailers:
         self.update_tailers()
 
     def update_tailers(self):
-        for tailer in self.get_docker_tailers():
-            self.add_tailer(tailer)
+        if self.docker:
+            self.add_docker_tailers()
 
     def add_tailer(self, tailer):
         self.tailers[tailer.fileno] = tailer
         self.poller.register(tailer.stdout, select.POLLIN)
 
-    def get_docker_tailers(self):
-        active_containers = self.docker_client.containers.list()
-        return [DockerContainerTailer(a) for a in active_containers]
+
+    def add_docker_tailers(self):
+        containers = self.docker_client.containers.list()
+        for c in containers:
+            self.add_tailer(DockerContainerTailer(c))
+
 
     def iter_lines(self):
         while True:
