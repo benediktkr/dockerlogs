@@ -136,12 +136,16 @@ class DockerContainerTailer(BaseLogTailer):
         self.stdout = self.ps.stdout
         self.fileno = self.ps.stdout.fileno()
 
+        try:
+            image = self.container.image.tags[0]
+        except IndexError:
+            image = self.container.image.id
         self.envelope = {
             'type': 'dockerlogs',
             'container_name': self.container.name,
             'container_id': self.container.id,
             'container_short_id': self.container.short_id,
-            'container_image': self.container.image.tags[0],
+            'container_image': image,
             **self.base_envelope
         }
 
