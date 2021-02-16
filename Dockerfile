@@ -23,6 +23,8 @@ RUN poetry build --no-interaction --ansi
 
 FROM base as final
 
+COPY --chown=sudois:sudois pyproject.toml /sudois
+COPY --chown=sudois:sudois poetry.lock /sudois
 COPY --chown=sudois:sudois dockerlogs/ /sudois/dockerlogs
 RUN poetry install --no-interaction --no-root --ansi
 
