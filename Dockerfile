@@ -29,4 +29,4 @@ COPY --chown=sudois:sudois dockerlogs/ /sudois/dockerlogs
 RUN poetry install --no-interaction --no-root --ansi
 
 USER root
-CMD ["dockerlogs"]
+CMD ["dockertailer"]

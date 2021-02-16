@@ -68,6 +68,7 @@ class BaseLogTailer:
                 }
             }
         except IndexError as e:
+            print(log)
             return {'message': log,
                     'parser_error': str(e)}
 
@@ -147,7 +148,6 @@ class DockerContainerTailer(BaseLogTailer):
 
 @dataclass
 class LogTailers:
-    docker: bool
     tailers: dict[int, BaseLogTailer] = field(default_factory=dict)
 
     def __post_init__(self):
@@ -157,8 +157,7 @@ class LogTailers:
         self.update_tailers()
 
     def update_tailers(self):
-        if self.docker:
-            self.add_docker_tailers()
+        self.add_docker_tailers()
 
     def add_tailer(self, tailer):
         self.tailers[tailer.fileno] = tailer

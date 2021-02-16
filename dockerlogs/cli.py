@@ -9,23 +9,30 @@ from dockerlogs import __version__
 from loguru import logger
 import click
 
+logger.remove()
+
 @click.command()
 @click.option('--output-type', default="print",
               type=click.Choice(LogOutput.list_outputs()))
 @click.option('--output-url')
-@click.option('--file', multiple=True)
-@click.option('--docker/--no-docker', default=True)
-def cli(output_type, output_url, file, docker):
+def _dockertailer(output_type, output_url):
 
-    logger.info(f"dockerlogs v{__version__}")
-
-    dockerlogs = LogTailers(docker)
+    dockerlogs = LogTailers()
     output = LogOutput.get(output_type, output_url)
 
     for logline in dockerlogs.iter_lines():
         output.handle(logline)
 
-def main():
-    logger.remove()
-    #logger.add(sys.stdout, serialize=True)
-    return cli(auto_envvar_prefix="DOCKERLOGS")
+@click.option('--output-type', default="print",
+              type=click.Choice(LogOutput.list_outputs()))
+@click.option('--output-url')
+@click.option('--file')
+@click.option('--app-name')
+def _filetailer(output_type, output_url, file, app_name):
+    pass
+
+def dockertailer():
+    return _dockertailer(auto_envvar_prefix="DOCKERLOGS")
+
+def filetailer():
+    return _filetailer(auto_envvar_prefix="DOCKERLOGS")
