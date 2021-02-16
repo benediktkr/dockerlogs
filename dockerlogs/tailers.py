@@ -50,6 +50,13 @@ class BaseLogTailer:
                     'parse_error': str(e)}
 
 
+    def parse_redis(self, log):
+        s = log.split(" * ", 1)
+        if len(s) == 1:
+            s = log.split(" # ", 1)
+        return {'message': s[1].strip(),
+                'logger_timestamp': s[0].strip() }
+
     def parse_jellyfin(self, log):
         s = log.split(" ", 3)
         logger_name, message = s[3].split(": ", 1)
@@ -60,9 +67,9 @@ class BaseLogTailer:
             severity = _severity
 
         return {'severity': severity,
-                'message': message,
+                'message': message.strip(),
                 'logger_timestamp': s[0][1:-1],
-                'logger_name': logger_name}
+                'logger_name': logger_name.strip()}
 
     def parse_nextcloud_apache(self, log):
         s = shlex.split(log)
@@ -141,6 +148,8 @@ class DockerContainerTailer(BaseLogTailer):
             self.parse_format = self.parse_nextcloud_apache
         elif self.format == "jellyfin":
             self.parse_format = self.parse_jellyfin
+        elif self.format == "redis":
+            self.parse_format = self.parse_redis
         else:
             self.parse_format = self.parse_plain
 
