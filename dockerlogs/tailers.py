@@ -119,11 +119,11 @@ class DockerContainerTailer(BaseLogTailer):
         self.is_json = self.format == "json"
         self.json_msg_key = labels.get('dockerlogs_json_msg_key', "message")
 
-        if format == "json":
+        if self.format == "json":
             self.parse_format = self.parse_json
-        elif format == "loguru_plain":
+        elif self.format == "loguru_plain":
             self.parse_format = self.parse_loguru_plain
-        elif format == "nextcloud":
+        elif self.format == "nextcloud":
             self.parse_format = self.parse_nextcloud_apache
         else:
             self.parse_format = self.parse_plain
