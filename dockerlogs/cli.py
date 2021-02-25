@@ -5,34 +5,28 @@ import sys
 from dockerlogs.tailers import LogTailers
 from dockerlogs.outputs import LogOutput
 from dockerlogs import __version__
+from itertools import cycle
 
 from loguru import logger
 import click
-
-logger.remove()
 
 @click.command()
 @click.option('--output-type', default="print",
               type=click.Choice(LogOutput.list_outputs()))
 @click.option('--output-url')
-def _dockertailer(output_type, output_url):
+@click.option('--debug/--no-debug')
+def main(output_type, output_url, debug):
+    if not debug:
+        logger.remove()
+        logger.add(sys.stderr, level="INFO")
+
+    spinners = cycle(['|', '/', '-', '\\'])
 
     dockerlogs = LogTailers()
     output = LogOutput.get(output_type, output_url)
 
+    logger.info("started")
+
     for logline in dockerlogs.iter_lines():
         output.handle(logline)
-
-@click.option('--output-type', default="print",
-              type=click.Choice(LogOutput.list_outputs()))
-@click.option('--output-url')
-@click.option('--file')
-@click.option('--app-name')
-def _filetailer(output_type, output_url, file, app_name):
-    pass
-
-def dockertailer():
-    return _dockertailer(auto_envvar_prefix="DOCKERLOGS")
-
-def filetailer():
-    return _filetailer(auto_envvar_prefix="DOCKERLOGS")
+        print(next(spinners), end='\r')
