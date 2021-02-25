@@ -29,5 +29,6 @@ Example:
 ```
 DOCKERLOGS_OUTPUT_TYPE=udp
 DOCKERLOGS_OUTPUT_URL=udp://logstash.example.com:5000
+
 dockerlogs
 ```
