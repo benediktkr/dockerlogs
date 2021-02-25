@@ -1,6 +1,8 @@
 # dockerlogs
 
 [![Build Status](https://jenkins.sudo.is/buildStatus/icon?job=ben%2Fopenldap-docker%2Fmaster&style=flat-square)](https://jenkins.sudo.is/job/ben/job/dockerlogs/job/master/)
+![Docker Build Status](https://img.shields.io/docker/build/benediktkr/dockerlogs)
+![Docker Image Version (latest by date)](https://img.shields.io/docker/v/benediktkr/dockerlogs)
 
 Home-grown log shipper to logstash. Found the landscape to be too confusing, rolled my own
 
